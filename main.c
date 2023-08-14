@@ -41,10 +41,21 @@ typedef struct aeroporto{
 } Aeroporto;
 
 
-void lerArquivo(Aeroporto * aero){
+//Ler o arquivo de configuração do aeroporto
+void lerArquivo(Aeroporto * aero, const char * nome){
 	FILE * arquivo; 
-	char linha[100];
+	char caractere;
 
+	arquivo = fopen(nome, "r");
+	if (arquivo != NULL){
+		printf("Falha ao ler o arquivo\n");
+		return;
+	}
+
+	//Lê o conteúdo do arquivo caractere por caractere 
+	while((caractere = fgetc(arquivo)) != EOF){
+		printf("%c", caractere);
+	}
 }
 
 //Função que imprime os dados do vôo

@@ -45,3 +45,16 @@ A formatação para um arquivo de configuração do aeroporto acima deve ser:
 .
 .
 ```
+
+Portanto, o conteúdo do arquivo seria:
+
+```
+1 3 4
+21 2 2 2
+35 3 7 6 
+23 2 5 4
+11 2 0 3
+12 3 1 4
+13 2 3 1
+14 4 4 1
+```
