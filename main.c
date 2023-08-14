@@ -86,9 +86,8 @@ int main(int argc, char ** argv){
 	Aeroporto * aeroportos;
 	
 	//Pede para o usuário informar a quantidade de aeroportos (processos);
-	printf("Insira a quantidade de aeroportos: \n");
-	
-	scanf("%d", &qtd_aeroportos);
+	//printf("Insira a quantidade de aeroportos: \n");
+	//scanf("%d", &qtd_aeroportos);
 	
 	//verificar se os aeroportos criados não ultrapassam o limite estabelecido:
 	if (qtd_aeroportos > MAX_AEROPORTOS){
@@ -97,14 +96,14 @@ int main(int argc, char ** argv){
 	}
 
 	//Aloca o vetor de aeroportos na memória 
-	aeroportos = (struct aeroporto*)malloc(sizeof(aeroportos) * qtd_aeroportos);
+	aeroportos = (struct aeroporto*)malloc(sizeof(aeroportos) * 4);
 
-	//Iniciando o ambiente MPI 
+	//Iniciando o ambiente MPI
 	MPI_Init(&argc, &argv);
 	
 	MPI_Comm_size(MPI_COMM_WORLD, &cluster_size);
 	
-	
+	printf("Bom dia\n");
 
 	MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
 
