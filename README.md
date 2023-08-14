@@ -21,9 +21,27 @@ O sistema de arquivos que carregam a configuração de cada aeroporto baseia-se:
 A formatação para um arquivo de configuração do aeroporto acima deve ser:
 ### Sistema de Arquivos: 
 ```
-projeto
-|
-+--aeroporto1.txt
-+--aeroporto2.txt
-+--aeroporto3.txt
+\projeto
+   aeroporto1.txt
+   aeroporto2.txt
+   aeroporto3.txt
+```
+
+### Conteúdo do Arquivo:
+```
+<Código> <Número de pousos> <Número de decolagens>
+<Tempo de pouso> <Tempo da origem> <Horário de Chegada> <Tempo de voo>
+<Tempo de pouso> <Tempo da origem> <Horário de Chegada> <Tempo de voo>
+<Tempo de pouso> <Tempo da origem> <Horário de Chegada> <Tempo de voo>
+.
+.
+.
+
+<Tempo de decolagem> <Tempo da origem> <Horário de Partida> <Tempo de voo>
+<Tempo de decolagem> <Tempo da origem> <Horário de Partida> <Tempo de voo>
+<Tempo de decolagem> <Tempo da origem> <Horário de Partida> <Tempo de voo>
+<Tempo de decolagem> <Tempo da origem> <Horário de Partida> <Tempo de voo>
+.
+.
+.
 ```
