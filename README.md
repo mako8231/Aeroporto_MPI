@@ -17,3 +17,13 @@ O sistema de arquivos que carregam a configuração de cada aeroporto baseia-se:
 |   12     | 3  | 1  | 4  |   
 |   13     |  2 | 3  | 1  |
 |   14     |  4 | 4  | 2  |
+
+A formatação para um arquivo de configuração do aeroporto acima deve ser:
+### Sistema de Arquivos: 
+```
+projeto
+|
++--aeroporto1.txt
++--aeroporto2.txt
++--aeroporto3.txt
+```
