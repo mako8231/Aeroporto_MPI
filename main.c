@@ -4,7 +4,6 @@
 	Integrantes: 
 		- Masao Muraoka Neto 
 		- Lucas Takashi Honda
-		- Arthur Lima 
 
 	argumentos de compilação:
 		- mpicc -o main aeroporto.c && mpirun -xterm -1! -np 2 ./main
@@ -41,6 +40,12 @@ typedef struct aeroporto{
 	Voo voos_decolagem[MAX_VOOS]; //voos para pouso
 } Aeroporto;
 
+
+void lerArquivo(Aeroporto * aero){
+	FILE * arquivo; 
+	char linha[100];
+
+}
 
 //Função que imprime os dados do vôo
 void imprimirVoo(Voo voo){
