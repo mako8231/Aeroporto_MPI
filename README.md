@@ -5,7 +5,7 @@ Trabalho de Sistema distribuídos: um projeto de controle de decolagem e pouso u
 ## Critério de Arquivos:
 O sistema de arquivos que carregam a configuração de cada aeroporto baseia-se:
 
-| Código | 1 |   |   |   
+| Código | 1 |   |   |   |
 |--------|---|---|---|---|
 |Pousos:        |3   |Decolagens:   |4   |   
 |Pousos        |Origem   |Horário de Chegada   |Tempo de Voo   |   
