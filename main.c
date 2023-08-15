@@ -40,7 +40,8 @@ typedef struct aeroporto{
 	Voo voos_decolagem[MAX_VOOS]; //voos para pouso
 } Aeroporto;
 
-
+void inicializarVoo(Voo * voo);
+void inicializarAeroporto(Aeroporto * aero);
 void imprimirVoo(Voo voo);
 void imprimirAeroporto(Aeroporto aero);
 void lerArquivo(Aeroporto * aero, const char * nome);
@@ -59,11 +60,57 @@ void lerArquivo(Aeroporto *aero, const char *nome) {
 		return; 
 	}
 
+	//ler a primeira linha e obtendo os dados do aeroporto
 	fgets(buffer, sizeof(buffer), arquivo);
-	printf("%s", buffer);
-	
+	printf("Primeira linha lida\n%s", buffer);
+
+	inicializarAeroporto(aero);
+
+	sscanf(buffer, "%d %d %d", &aero->codigo, &aero->n_pousos, &aero->n_decolagens);
+	//lendo os dados de pouso:
+	for (i=0; i<aero->n_pousos; i++){
+		fgets(buffer, sizeof(buffer), arquivo);
+		printf("Buffer lido: %s", buffer);
+		sscanf(buffer, "%d %d %d %d", 
+			&aero->voos_pouso[i].cod_voo, 
+			&aero->voos_pouso[i].aeroporto_origem, 
+			&aero->voos_pouso[i].horario_chegada, 
+			&aero->voos_pouso[i].duracao);
+	}
+
+	//lendo os dados de decolagem
+	for (i=0; i<aero->n_decolagens; i++){
+		fgets(buffer, sizeof(buffer), arquivo);
+		printf("Buffer lido: %s", buffer);
+		sscanf(buffer, "%d %d %d %d", 
+			&aero->voos_decolagem[i].cod_voo, 
+			&aero->voos_decolagem[i].aeroporto_origem, 
+			&aero->voos_decolagem[i].horario_chegada, 
+			&aero->voos_decolagem[i].duracao);
+	}
+
+	imprimirAeroporto(*aero);
 	fclose(arquivo);
 }
+
+void inicializarVoo(Voo * voo){
+	voo->aeroporto_destino = 0;
+	voo->aeroporto_origem = 0;
+	voo->cod_voo = 0;
+	voo->duracao = 0;
+	voo->horario_chegada = 0;
+	voo->horario_partida = 0;
+	voo->tipo_voo = -1;
+}
+
+void inicializarAeroporto(Aeroporto * aero){
+	for (int i = 0; i<MAX_VOOS; i++){
+		printf("%d\n", i);
+		inicializarVoo(&aero->voos_decolagem[i]);
+		inicializarVoo(&aero->voos_pouso[i]);
+	}
+}
+
 
 //Função que imprime os dados do vôo
 void imprimirVoo(Voo voo){
@@ -106,21 +153,19 @@ void imprimirAeroporto(Aeroporto aero){
 int main(int argc, char ** argv){
 	int qtd_aeroportos, process_rank, cluster_size;
 	//Lista de aeroportos 
-	Aeroporto * aeroportos;
+	Aeroporto aeroportos[10];
 	
 	//Pede para o usuário informar a quantidade de aeroportos (processos);
 	//printf("Insira a quantidade de aeroportos: \n");
-	//scanf("%d", &qtd_aeroportos);
+	scanf("%d", &qtd_aeroportos);
 	
 	//verificar se os aeroportos criados não ultrapassam o limite estabelecido:
-	if (qtd_aeroportos > MAX_AEROPORTOS){
+	/*if (qtd_aeroportos > MAX_AEROPORTOS){
 		printf("Limite máximo de aeroportos estourado. Insira uma quantidade inferior ou igual a %d\n", MAX_AEROPORTOS);
 		return 1;
-	}
+	}*/
 
 	//Aloca o vetor de aeroportos na memória 
-	aeroportos = (struct aeroporto*)malloc(sizeof(aeroportos) * 4);
-	
 	lerArquivo(&aeroportos[0], "configuracao.txt");
 	
 	
