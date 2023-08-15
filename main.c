@@ -12,7 +12,7 @@
 #include <openmpi/mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <string.h>
 
 #define MAX_VOOS 10
 /**Aqui vai ter que verificar a quantidade de processos que o seu hardware aguenta
@@ -41,21 +41,28 @@ typedef struct aeroporto{
 } Aeroporto;
 
 
-//Ler o arquivo de configuração do aeroporto
-void lerArquivo(Aeroporto * aero, const char * nome){
-	FILE * arquivo; 
-	char caractere;
+void imprimirVoo(Voo voo);
+void imprimirAeroporto(Aeroporto aero);
+void lerArquivo(Aeroporto * aero, const char * nome);
+
+
+void lerArquivo(Aeroporto *aero, const char *nome) {
+    FILE *arquivo;
+    int i, j;
+	char buffer[200];
 
 	arquivo = fopen(nome, "r");
-	if (arquivo != NULL){
-		printf("Falha ao ler o arquivo\n");
-		return;
+
+	//Verificar se não houve erro na leitura do arquivo
+	if (arquivo == NULL){
+		printf("Falha ao ler arquivo\n");
+		return; 
 	}
 
-	//Lê o conteúdo do arquivo caractere por caractere 
-	while((caractere = fgetc(arquivo)) != EOF){
-		printf("%c", caractere);
-	}
+	fgets(buffer, sizeof(buffer), arquivo);
+	printf("%s", buffer);
+	
+	fclose(arquivo);
 }
 
 //Função que imprime os dados do vôo
@@ -113,20 +120,18 @@ int main(int argc, char ** argv){
 
 	//Aloca o vetor de aeroportos na memória 
 	aeroportos = (struct aeroporto*)malloc(sizeof(aeroportos) * 4);
-
+	
+	lerArquivo(&aeroportos[0], "configuracao.txt");
+	
+	
 	//Iniciando o ambiente MPI
 	MPI_Init(&argc, &argv);
-	
 	MPI_Comm_size(MPI_COMM_WORLD, &cluster_size);
-	
-	printf("Bom dia\n");
-
 	MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
+
+
 
 	//Finalizar o ambiente MPI 
 	MPI_Finalize();
-
-	free(aeroportos);
-
 	return 0;
 }

@@ -29,18 +29,7 @@ A formatação para um arquivo de configuração do aeroporto acima deve ser:
 
 ### Conteúdo do Arquivo:
 ```
-<Código> <Número de pousos> <Número de decolagens>
-<Tempo de pouso> <Tempo da origem> <Horário de Chegada> <Tempo de voo>
-<Tempo de pouso> <Tempo da origem> <Horário de Chegada> <Tempo de voo>
-<Tempo de pouso> <Tempo da origem> <Horário de Chegada> <Tempo de voo>
-.
-.
-.
-
-<Tempo de decolagem> <Tempo da origem> <Horário de Partida> <Tempo de voo>
-<Tempo de decolagem> <Tempo da origem> <Horário de Partida> <Tempo de voo>
-<Tempo de decolagem> <Tempo da origem> <Horário de Partida> <Tempo de voo>
-<Tempo de decolagem> <Tempo da origem> <Horário de Partida> <Tempo de voo>
+<Código> <Número de pousos> <Número de decolagens> <Tempo de pouso> <Tempo da origem> <Horário de Chegada> <Tempo de voo> <Tempo de pouso> <Tempo da origem> <Horário de Chegada> <Tempo de voo> <Tempo de pouso> <Tempo da origem> <Horário de Chegada> <Tempo de voo> . . . <Tempo de decolagem> <Tempo da origem> <Horário de Partida> <Tempo de voo> <Tempo de decolagem> <Tempo da origem> <Horário de Partida> <Tempo de voo> <Tempo de decolagem> <Tempo da origem> <Horário de Partida> <Tempo de voo> <Tempo de decolagem> <Tempo da origem> <Horário de Partida> <Tempo de voo>
 .
 .
 .
@@ -49,12 +38,5 @@ A formatação para um arquivo de configuração do aeroporto acima deve ser:
 Portanto, o conteúdo do arquivo seria:
 
 ```
-1 3 4
-21 2 2 2
-35 3 7 6 
-23 2 5 4
-11 2 0 3
-12 3 1 4
-13 2 3 1
-14 4 4 1
+1 3 4 21 2 2 2 35 3 7 6 23 2 5 4 11 2 0 3 12 3 1 4 13 2 3 1 14 4 4 1
 ```
