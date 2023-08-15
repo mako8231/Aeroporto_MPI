@@ -5,7 +5,7 @@
 		- Masao Muraoka Neto 
 		- Lucas Takashi Honda
 
-	argumentos de compilação:
+	argumentos de compilação (se vc estiver rodando isso no linux com o xterm instalado):
 		- mpicc -o main aeroporto.c && mpirun -xterm -1! -np 2 ./main
 */
 
@@ -62,15 +62,15 @@ void lerArquivo(Aeroporto *aero, const char *nome) {
 
 	//ler a primeira linha e obtendo os dados do aeroporto
 	fgets(buffer, sizeof(buffer), arquivo);
-	printf("Primeira linha lida\n%s", buffer);
 
 	inicializarAeroporto(aero);
 
 	sscanf(buffer, "%d %d %d", &aero->codigo, &aero->n_pousos, &aero->n_decolagens);
 	//lendo os dados de pouso:
 	for (i=0; i<aero->n_pousos; i++){
+		aero->voos_pouso[i].tipo_voo = 1;
 		fgets(buffer, sizeof(buffer), arquivo);
-		printf("Buffer lido: %s", buffer);
+
 		sscanf(buffer, "%d %d %d %d", 
 			&aero->voos_pouso[i].cod_voo, 
 			&aero->voos_pouso[i].aeroporto_origem, 
@@ -80,8 +80,9 @@ void lerArquivo(Aeroporto *aero, const char *nome) {
 
 	//lendo os dados de decolagem
 	for (i=0; i<aero->n_decolagens; i++){
+		aero->voos_decolagem[i].tipo_voo = 0;
 		fgets(buffer, sizeof(buffer), arquivo);
-		printf("Buffer lido: %s", buffer);
+
 		sscanf(buffer, "%d %d %d %d", 
 			&aero->voos_decolagem[i].cod_voo, 
 			&aero->voos_decolagem[i].aeroporto_origem, 
@@ -93,6 +94,7 @@ void lerArquivo(Aeroporto *aero, const char *nome) {
 	fclose(arquivo);
 }
 
+//Inicializar as variáveis de voo
 void inicializarVoo(Voo * voo){
 	voo->aeroporto_destino = 0;
 	voo->aeroporto_origem = 0;
@@ -103,9 +105,9 @@ void inicializarVoo(Voo * voo){
 	voo->tipo_voo = -1;
 }
 
+//Inicializar os itens do Aeroporto 
 void inicializarAeroporto(Aeroporto * aero){
 	for (int i = 0; i<MAX_VOOS; i++){
-		printf("%d\n", i);
 		inicializarVoo(&aero->voos_decolagem[i]);
 		inicializarVoo(&aero->voos_pouso[i]);
 	}
@@ -154,17 +156,6 @@ int main(int argc, char ** argv){
 	int qtd_aeroportos, process_rank, cluster_size;
 	//Lista de aeroportos 
 	Aeroporto aeroportos[10];
-	
-	//Pede para o usuário informar a quantidade de aeroportos (processos);
-	//printf("Insira a quantidade de aeroportos: \n");
-	scanf("%d", &qtd_aeroportos);
-	
-	//verificar se os aeroportos criados não ultrapassam o limite estabelecido:
-	/*if (qtd_aeroportos > MAX_AEROPORTOS){
-		printf("Limite máximo de aeroportos estourado. Insira uma quantidade inferior ou igual a %d\n", MAX_AEROPORTOS);
-		return 1;
-	}*/
-
 	//Aloca o vetor de aeroportos na memória 
 	lerArquivo(&aeroportos[0], "configuracao.txt");
 	
@@ -173,9 +164,6 @@ int main(int argc, char ** argv){
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &cluster_size);
 	MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
-
-
-
 	//Finalizar o ambiente MPI 
 	MPI_Finalize();
 	return 0;
