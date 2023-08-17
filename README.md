@@ -30,17 +30,17 @@ A formatação para um arquivo de configuração do aeroporto acima deve ser:
 ### Conteúdo do Arquivo:
 ```
 <Código> <Número de pousos> <Número de decolagens>
-<Tempo de pouso> <Tempo da origem> <Horário de Chegada> <Tempo de voo>
-<Tempo de pouso> <Tempo da origem> <Horário de Chegada> <Tempo de voo>
-<Tempo de pouso> <Tempo da origem> <Horário de Chegada> <Tempo de voo>
+<Tempo de pouso> <Aeroporto de origem> <Horário de Chegada> <Tempo de voo>
+<Tempo de pouso> <Aeroporto de da origem> <Horário de Chegada> <Tempo de voo>
+<Tempo de pouso> <Aeroporto de da origem> <Horário de Chegada> <Tempo de voo>
 .
 .
 .
 
-<Tempo de decolagem> <Tempo da origem> <Horário de Partida> <Tempo de voo>
-<Tempo de decolagem> <Tempo da origem> <Horário de Partida> <Tempo de voo>
-<Tempo de decolagem> <Tempo da origem> <Horário de Partida> <Tempo de voo>
-<Tempo de decolagem> <Tempo da origem> <Horário de Partida> <Tempo de voo>
+<Tempo de decolagem> <Aeroporto de destino> <Horário de Partida> <Tempo de voo>
+<Tempo de decolagem> <Aeroporto de destino> <Horário de Partida> <Tempo de voo>
+<Tempo de decolagem> <Aeroporto de destino> <Horário de Partida> <Tempo de voo>
+<Tempo de decolagem> <Aeroporto de destino> <Horário de Partida> <Tempo de voo>
 .
 .
 .

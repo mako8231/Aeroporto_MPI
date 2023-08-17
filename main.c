@@ -13,12 +13,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define MAX_VOOS 10
 /**Aqui vai ter que verificar a quantidade de processos que o seu hardware aguenta
    Pois cada aeroporto é um processo diferente 
 **/
 #define MAX_AEROPORTOS 4
+
+char nomes[MAX_AEROPORTOS][20] = {
+	"aeroporto1.txt",
+	"aeroporto2.txt",
+	"aeroporto3.txt",
+	"aeroporto4.txt"
+};
 
 //Datatype para o vôo 
 typedef struct voo{
@@ -40,12 +48,84 @@ typedef struct aeroporto{
 	Voo voos_decolagem[MAX_VOOS]; //voos para pouso
 } Aeroporto;
 
+typedef struct relogioLogico {
+	int tempo;
+} RelogioLamport;
+
+//Mensagem que será enviada de um aeroporto para outro
+typedef struct mensagem {
+	int remetente;  //código do aeroporto remetente (process rank)
+	int destinatario; //código do aeroporto destinatário (process rank)
+	int tipo_mensagem; //Tipo de mensagem, se é um pedido de pouso ou um pedido de decolagem
+	char buffer[100]; //conteúdo da mensagem, que o próprio aeroporto vai decodificar e transformar numa estrutura legível
+	int tempo_evento; //evento baseado no relógio lógico
+
+} Mensagem;
+
 void inicializarVoo(Voo * voo);
 void inicializarAeroporto(Aeroporto * aero);
 void imprimirVoo(Voo voo);
 void imprimirAeroporto(Aeroporto aero);
 void lerArquivo(Aeroporto * aero, const char * nome);
+void atualizarRelogioLamport(RelogioLamport * relogio, int tempoNovoEvento);
+void imprimirRelogioLamport(RelogioLamport relogio);
+void delay(int segundos);
 
+int main(int argc, char ** argv){
+	int qtd_aeroportos, process_rank, cluster_size, t;
+	
+	//Lista de aeroportos 
+	Aeroporto aeroportos[MAX_AEROPORTOS];
+	RelogioLamport relogios[MAX_AEROPORTOS];
+
+	//Iniciando o ambiente MPI
+	MPI_Init(&argc, &argv);
+	
+	MPI_Comm_size(MPI_COMM_WORLD, &cluster_size);
+	MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
+	
+	//cada processo lê a configuração de um aeroporto
+	lerArquivo(&aeroportos[process_rank], nomes[process_rank]);
+	//Inicializar o relógio lógico
+	relogios[process_rank].tempo = 0;
+
+	while (relogios[process_rank].tempo < 100){
+		printf("Relógio: %d\n", relogios[process_rank].tempo);
+		delay(1000);
+		//A cada atualização do relógio 
+		atualizarRelogioLamport(&relogios[process_rank], relogios[process_rank].tempo);
+		
+	}
+	
+	imprimirAeroporto(aeroportos[process_rank]);
+	imprimirRelogioLamport(relogios[process_rank]);
+
+
+	//Finalizar o ambiente MPI 
+	MPI_Finalize();
+	return 0;
+}
+
+void delay(int segundos){
+	//Tempo em milissegundos 
+	int msecs = 1000 * segundos;
+	clock_t tempo_inicial = clock();
+
+	while(clock() < tempo_inicial + msecs);
+	
+}
+
+
+/*Atualiza o relógio lógico para o valor máximo entre o tempo atual para o 
+tempo do novo evento somando com 1*/
+void atualizarRelogioLamport(RelogioLamport * relogio, int tempoNovoEvento){
+	relogio->tempo = (tempoNovoEvento > relogio->tempo) ? tempoNovoEvento + 1 : relogio->tempo + 1; 
+}
+
+void imprimirRelogioLamport(RelogioLamport relogio){
+	printf("HORÁRIO ATUAL DO RELOGIO LAMPORT:\n");
+	printf("TEMPO: %d\n", relogio.tempo);
+}
 
 void lerArquivo(Aeroporto *aero, const char *nome) {
     FILE *arquivo;
@@ -85,12 +165,11 @@ void lerArquivo(Aeroporto *aero, const char *nome) {
 
 		sscanf(buffer, "%d %d %d %d", 
 			&aero->voos_decolagem[i].cod_voo, 
-			&aero->voos_decolagem[i].aeroporto_origem, 
-			&aero->voos_decolagem[i].horario_chegada, 
+			&aero->voos_decolagem[i].aeroporto_destino, 
+			&aero->voos_decolagem[i].horario_partida, 
 			&aero->voos_decolagem[i].duracao);
 	}
 
-	imprimirAeroporto(*aero);
 	fclose(arquivo);
 }
 
@@ -124,7 +203,12 @@ void imprimirVoo(Voo voo){
 	printf("Horário de partida: %d\n", voo.horario_partida);
 	printf("Horário de chegada: %d\n", voo.horario_chegada);
 	printf("Duração do Vôo: %d\n", voo.duracao);
-	printf("Tipo do vôo: %d\n", voo.tipo_voo);
+	if (voo.tipo_voo == 0){
+		printf("Tipo do vôo: decolagem\n");	
+	} else {
+		printf("Tipo do vôo: partida\n");
+	}
+	
 	
 	printf("======================================================\n");
 }
@@ -152,19 +236,3 @@ void imprimirAeroporto(Aeroporto aero){
 		
 }
 
-int main(int argc, char ** argv){
-	int qtd_aeroportos, process_rank, cluster_size;
-	//Lista de aeroportos 
-	Aeroporto aeroportos[10];
-	//Aloca o vetor de aeroportos na memória 
-	lerArquivo(&aeroportos[0], "configuracao.txt");
-	
-	
-	//Iniciando o ambiente MPI
-	MPI_Init(&argc, &argv);
-	MPI_Comm_size(MPI_COMM_WORLD, &cluster_size);
-	MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
-	//Finalizar o ambiente MPI 
-	MPI_Finalize();
-	return 0;
-}
