@@ -10,6 +10,7 @@
 */
 
 #include <openmpi/mpi.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,15 +55,6 @@ typedef struct relogioLogico {
 	int tempo;
 } RelogioLamport;
 
-//Mensagem que será enviada de um aeroporto para outro
-typedef struct mensagem {
-	int remetente;  //código do aeroporto remetente (process rank)
-	int destinatario; //código do aeroporto destinatário (process rank)
-	int tipo_mensagem; //Tipo de mensagem, se é um pedido de pouso ou um pedido de decolagem
-	int tempo_evento; //evento baseado no relógio lógico
-	Voo dados_voo;
-} Mensagem;
-
 void inicializarVoo(Voo * voo);
 void inicializarAeroporto(Aeroporto * aero);
 void imprimirVoo(Voo voo);
@@ -71,9 +63,18 @@ void lerArquivo(Aeroporto * aero, const char * nome);
 void atualizarRelogioLamport(RelogioLamport * relogio, int tempoNovoEvento);
 void imprimirRelogioLamport(RelogioLamport relogio);
 void delay(int segundos);
+int processarBuffer(char buffer[20], Aeroporto * aero);
 
 int main(int argc, char ** argv){
 	int qtd_aeroportos, process_rank, cluster_size, t;
+	//Buffer da mensagem pra enviar
+	char message_buffer[MAX_AEROPORTOS][20];
+	//Buffer da mensagem recebida
+	char send_message_buffer[20];
+
+	for (int i = 0; i<MAX_AEROPORTOS; i++){
+		strcpy(message_buffer[i], "0 0 0 0 0 0 0");
+	}
 	
 	//Lista de aeroportos 
 	Aeroporto aeroportos[MAX_AEROPORTOS];
@@ -84,65 +85,95 @@ int main(int argc, char ** argv){
 	
 	MPI_Comm_size(MPI_COMM_WORLD, &cluster_size);
 	MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
-	
 	//cada processo lê a configuração de um aeroporto
 	lerArquivo(&aeroportos[process_rank], nomes[process_rank]);
-	//inicializar os valores padrões
-	inicializarAeroporto(&aeroportos[process_rank]);
-
 	//Inicializar o relógio lógico
 	relogios[process_rank].tempo = 0;
 
 	while (TRUE){
-		printf("========Insira um voo========\n");
-		
-		int n_decolagens = aeroportos[process_rank].n_decolagens;
-		int n_pousos = aeroportos[process_rank].n_pousos;
-
-		//variáveis para o aeroporto
-		int hora_decolagem;
-		int aeroporto_destino;
-		int duracao_voo;
-		int horario_chegada;
-
-		printf("Insira a hora de decolagem: tempo atual: %d\n", relogios[process_rank].tempo);
-		scanf("%d",&hora_decolagem);
-		fflush(stdin);
-		
-		printf("Insira o destino do voo, MAX AEROPORTOS: %d\n", cluster_size);
-		//define o código do aeroporto de origem e destino
-		aeroportos[process_rank].voos_decolagem[n_decolagens].aeroporto_origem = process_rank + 1;
-		scanf("%d",&aeroporto_destino);
-		fflush(stdin);
-
-		printf("Insira a duração do voo:\n");
-		scanf("%d",&duracao_voo);
-		 
-		horario_chegada = hora_decolagem + duracao_voo;
-
-		fflush(stdin);
-
-		//inserção dos valores para a struct 
-		aeroportos[process_rank].voos_decolagem[n_decolagens].horario_partida = hora_decolagem;
-		aeroportos[process_rank].voos_decolagem[n_decolagens].aeroporto_origem = (process_rank+1);
-		aeroportos[process_rank].voos_decolagem[n_decolagens].aeroporto_destino = aeroporto_destino;
-		aeroportos[process_rank].voos_decolagem[n_decolagens].duracao = duracao_voo;
-		aeroportos[process_rank].voos_decolagem[n_decolagens].horario_chegada = horario_chegada;
-		aeroportos[process_rank].voos_decolagem[n_decolagens].cod_voo = (process_rank+1) * 10 + n_decolagens+1;
-
-		
-		aeroportos[process_rank].n_decolagens+=1;
-
 		imprimirAeroporto(aeroportos[process_rank]);
-		imprimirRelogioLamport(relogios[process_rank]);
+		printf("Horário: %d\n", relogios[process_rank].tempo);
+		//enviar informação do voo para os aeroportos 
+		MPI_Barrier(MPI_COMM_WORLD);
+		for (int i = 0; i<cluster_size; i++){
+			int dummy_1, dummy_2, codigo; 
+			MPI_Bcast(&message_buffer, sizeof(message_buffer), MPI_CHAR, i, MPI_COMM_WORLD);
 
-		
+			sscanf(message_buffer[process_rank], "%d %d %d", &dummy_1, &dummy_2, &codigo);
+			/*for (int j = 0; j<cluster_size; j++){
+				printf("%s", message_buffer[j]);
+				printf("\n");
+			}*/	
+			
+			if (codigo == aeroportos[process_rank].codigo){
+				int evento_tempo = processarBuffer(message_buffer[process_rank], &aeroportos[process_rank]);
+				atualizarRelogioLamport(&relogios[process_rank], evento_tempo);
+			}
+			//Limpar a mensagem
+			strcpy(message_buffer[process_rank], "0 0 0 0 0 0 0");
+		}		
+
+		for (int i = 0; i<aeroportos[process_rank].n_decolagens; i++){
+			//enviar a mensagem referente ao voo do seu tempo atual
+			if (aeroportos[process_rank].voos_decolagem[i].horario_partida == relogios[process_rank].tempo){
+				//Escrever a mensagem:
+				imprimirVoo(aeroportos[process_rank].voos_decolagem[i]);
+				printf("Enviando mensagem de voo para o aeroporto %d\n", aeroportos[process_rank].voos_decolagem[i].aeroporto_destino);
+				//processamento de mensgaens
+				/*
+					estrutura da mensagem
+					COD_VOO, AEROPORTO_ORIGEM, AEROPORTO_DESTINO, TEMPO_DECOLAGEM, TEMPO_CHEGADA, DURAÇÃO_VOO, TEMPO_DO_RELOGIO
+				*/
+
+				//processando o buffer de mensagem
+				sprintf(message_buffer[aeroportos[process_rank].voos_decolagem[i].aeroporto_destino - 1], "%d %d %d %d %d %d %d", 
+				aeroportos[process_rank].voos_decolagem[i].cod_voo,
+				aeroportos[process_rank].voos_decolagem[i].aeroporto_origem,
+				aeroportos[process_rank].voos_decolagem[i].aeroporto_destino,
+				aeroportos[process_rank].voos_decolagem[i].horario_partida,
+				aeroportos[process_rank].voos_decolagem[i].horario_chegada,
+				aeroportos[process_rank].voos_decolagem[i].tipo_voo,
+				relogios[process_rank].tempo);
+
+				atualizarRelogioLamport(&relogios[process_rank], 0);
+
+				printf("Mensagem enviada\n");
+				
+			}
+		}
+		delay(10000);
 	}
-	
 
 	//Finalizar o ambiente MPI 
 	MPI_Finalize();
 	return 0;
+}
+
+int processarBuffer(char buffer[20], Aeroporto * aero){
+	/*
+	estrutura da mensagem
+	COD_VOO, AEROPORTO_ORIGEM, AEROPORTO_DESTINO, TEMPO_DECOLAGEM, TEMPO_CHEGADA, DURAÇÃO_VOO, TEMPO_DO_RELOGIO
+	*/
+	//incrementar o número de pousos
+	
+	int tempo;
+
+	Voo novo_pouso; 
+	sscanf(buffer, "%d %d %d %d %d %d %d", 
+	&novo_pouso.cod_voo,
+	&novo_pouso.aeroporto_origem,
+	&novo_pouso.aeroporto_destino,
+	&novo_pouso.horario_partida, 
+	&novo_pouso.horario_chegada,
+	&novo_pouso.duracao,
+	&tempo);
+
+	novo_pouso.tipo_voo = 1;
+
+	aero->voos_pouso[aero->n_pousos] = novo_pouso;
+	aero->n_pousos += 1;
+
+	return tempo;
 }
 
 void delay(int segundos){
@@ -195,6 +226,9 @@ void lerArquivo(Aeroporto *aero, const char *nome) {
 			&aero->voos_pouso[i].aeroporto_origem, 
 			&aero->voos_pouso[i].horario_chegada, 
 			&aero->voos_pouso[i].duracao);
+
+		//inserir a duração do voo
+		aero->voos_pouso[i].horario_chegada = aero->voos_pouso[i].horario_partida + aero->voos_pouso[i].duracao;	
 	}
 
 	//lendo os dados de decolagem
@@ -207,7 +241,13 @@ void lerArquivo(Aeroporto *aero, const char *nome) {
 			&aero->voos_decolagem[i].aeroporto_destino, 
 			&aero->voos_decolagem[i].horario_partida, 
 			&aero->voos_decolagem[i].duracao);
+	
+		//inserir a duração do voo
+		aero->voos_decolagem[i].horario_chegada = aero->voos_decolagem[i].horario_partida + aero->voos_decolagem[i].duracao;
+		aero->voos_decolagem[i].aeroporto_origem = aero->codigo;
 	}
+
+	
 
 	fclose(arquivo);
 }
@@ -245,7 +285,7 @@ void imprimirVoo(Voo voo){
 	if (voo.tipo_voo == 0){
 		printf("Tipo do vôo: decolagem\n");	
 	} else {
-		printf("Tipo do vôo: partida\n");
+		printf("Tipo do vôo: pouso\n");
 	}
 	
 	
