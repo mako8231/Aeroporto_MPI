@@ -20,6 +20,8 @@
    Pois cada aeroporto é um processo diferente 
 **/
 #define MAX_AEROPORTOS 4
+#define TRUE 	1 
+#define FALSE 	0 
 
 char nomes[MAX_AEROPORTOS][20] = {
 	"aeroporto1.txt",
@@ -57,9 +59,8 @@ typedef struct mensagem {
 	int remetente;  //código do aeroporto remetente (process rank)
 	int destinatario; //código do aeroporto destinatário (process rank)
 	int tipo_mensagem; //Tipo de mensagem, se é um pedido de pouso ou um pedido de decolagem
-	char buffer[100]; //conteúdo da mensagem, que o próprio aeroporto vai decodificar e transformar numa estrutura legível
 	int tempo_evento; //evento baseado no relógio lógico
-
+	Voo dados_voo;
 } Mensagem;
 
 void inicializarVoo(Voo * voo);
@@ -86,20 +87,58 @@ int main(int argc, char ** argv){
 	
 	//cada processo lê a configuração de um aeroporto
 	lerArquivo(&aeroportos[process_rank], nomes[process_rank]);
+	//inicializar os valores padrões
+	inicializarAeroporto(&aeroportos[process_rank]);
+
 	//Inicializar o relógio lógico
 	relogios[process_rank].tempo = 0;
 
-	while (relogios[process_rank].tempo < 100){
-		printf("Relógio: %d\n", relogios[process_rank].tempo);
-		delay(1000);
-		//A cada atualização do relógio 
-		atualizarRelogioLamport(&relogios[process_rank], relogios[process_rank].tempo);
+	while (TRUE){
+		printf("========Insira um voo========\n");
+		
+		int n_decolagens = aeroportos[process_rank].n_decolagens;
+		int n_pousos = aeroportos[process_rank].n_pousos;
+
+		//variáveis para o aeroporto
+		int hora_decolagem;
+		int aeroporto_destino;
+		int duracao_voo;
+		int horario_chegada;
+
+		printf("Insira a hora de decolagem: tempo atual: %d\n", relogios[process_rank].tempo);
+		scanf("%d",&hora_decolagem);
+		fflush(stdin);
+		
+		printf("Insira o destino do voo, MAX AEROPORTOS: %d\n", cluster_size);
+		//define o código do aeroporto de origem e destino
+		aeroportos[process_rank].voos_decolagem[n_decolagens].aeroporto_origem = process_rank + 1;
+		scanf("%d",&aeroporto_destino);
+		fflush(stdin);
+
+		printf("Insira a duração do voo:\n");
+		scanf("%d",&duracao_voo);
+		 
+		horario_chegada = hora_decolagem + duracao_voo;
+
+		fflush(stdin);
+
+		//inserção dos valores para a struct 
+		aeroportos[process_rank].voos_decolagem[n_decolagens].horario_partida = hora_decolagem;
+		aeroportos[process_rank].voos_decolagem[n_decolagens].aeroporto_origem = (process_rank+1);
+		aeroportos[process_rank].voos_decolagem[n_decolagens].aeroporto_destino = aeroporto_destino;
+		aeroportos[process_rank].voos_decolagem[n_decolagens].duracao = duracao_voo;
+		aeroportos[process_rank].voos_decolagem[n_decolagens].horario_chegada = horario_chegada;
+		aeroportos[process_rank].voos_decolagem[n_decolagens].cod_voo = (process_rank+1) * 10 + n_decolagens+1;
+
+		
+		aeroportos[process_rank].n_decolagens+=1;
+
+		imprimirAeroporto(aeroportos[process_rank]);
+		imprimirRelogioLamport(relogios[process_rank]);
+
 		
 	}
 	
-	imprimirAeroporto(aeroportos[process_rank]);
-	imprimirRelogioLamport(relogios[process_rank]);
-
 
 	//Finalizar o ambiente MPI 
 	MPI_Finalize();
