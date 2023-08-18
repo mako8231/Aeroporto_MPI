@@ -99,12 +99,8 @@ int main(int argc, char ** argv){
 		for (int i = 0; i<cluster_size; i++){
 			int dummy_1, dummy_2, codigo; 
 			MPI_Bcast(&message_buffer, sizeof(message_buffer), MPI_CHAR, i, MPI_COMM_WORLD);
-
+	
 			sscanf(message_buffer[process_rank], "%d %d %d", &dummy_1, &dummy_2, &codigo);
-			/*for (int j = 0; j<cluster_size; j++){
-				printf("%s", message_buffer[j]);
-				printf("\n");
-			}*/	
 			
 			if (codigo == aeroportos[process_rank].codigo){
 				//Atualizando a lista do aeroporto
