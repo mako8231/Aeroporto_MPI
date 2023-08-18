@@ -64,6 +64,7 @@ void atualizarRelogioLamport(RelogioLamport * relogio, int tempoNovoEvento);
 void imprimirRelogioLamport(RelogioLamport relogio);
 void delay(int segundos);
 int processarBuffer(char buffer[20], Aeroporto * aero);
+void ajustarPrioridades(Aeroporto * aero);
 
 int main(int argc, char ** argv){
 	int qtd_aeroportos, process_rank, cluster_size, t;
@@ -106,8 +107,10 @@ int main(int argc, char ** argv){
 			}*/	
 			
 			if (codigo == aeroportos[process_rank].codigo){
+				//Atualizando a lista do aeroporto
 				int evento_tempo = processarBuffer(message_buffer[process_rank], &aeroportos[process_rank]);
 				atualizarRelogioLamport(&relogios[process_rank], evento_tempo);
+				ajustarPrioridades(&aeroportos[process_rank]);
 			}
 			//Limpar a mensagem
 			strcpy(message_buffer[process_rank], "0 0 0 0 0 0 0");
@@ -147,6 +150,20 @@ int main(int argc, char ** argv){
 	//Finalizar o ambiente MPI 
 	MPI_Finalize();
 	return 0;
+}
+
+void ajustarPrioridades(Aeroporto * aero){
+	//Para cada decolagem, verificar se elas não entram em conflito com voos
+	int i, j; 
+	for(i = 0; i<aero->n_decolagens; i++){
+		for (j = 0; j<aero->n_pousos; j++){
+			if (aero->voos_decolagem[i].horario_partida == aero->voos_pouso[j].horario_chegada){
+				//adiar a decolagem:
+				aero->voos_decolagem[i].horario_partida + 1;
+				aero->voos_decolagem[i].horario_chegada = aero->voos_decolagem[i].horario_partida + aero->voos_decolagem[i].duracao; 
+			}
+		}
+	}
 }
 
 int processarBuffer(char buffer[20], Aeroporto * aero){
